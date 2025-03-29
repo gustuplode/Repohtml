@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML CSS JS Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+        }
+
+        .editor-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .editor {
+            width: 100%;
+            height: 200px;
+            resize: vertical;
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        .editor:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+
+        .output-section {
+            flex: 1;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        iframe {
+            width: 100%;
+            flex: 1;
+            border: none;
+        }
+
+        label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .output-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .copy-btn {
+            background-color: #28a745;
+            margin-top: 5px;
+        }
+
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="export-btn">Export Code</button>
+        <button id="new-tab-btn">Open in New Tab</button>
+        <button id="import-btn">Import Code</button>
+    </div>
+    <div class="container">
+        <div class="editor-section">
+            <div class="editor-container">
+                <label for="html">HTML</label>
+                <textarea class="editor" id="html"></textarea>
+                <button class="copy-btn" onclick="copyCode('html')">Copy HTML</button>
+            </div>
+            
+            <div class="editor-container">
+                <label for="css">CSS</label>
+                <textarea class="editor" id="css"></textarea>
+                <button class="copy-btn" onclick="copyCode('css')">Copy CSS</button>
+            </div>
+            
+            <div class="editor-container">
+                <label for="js">JavaScript</label>
+                <textarea class="editor" id="js"></textarea>
+                <button class="copy-btn" onclick="copyCode('js')">Copy JS</button>
+            </div>
+        </div>
+        <div class="output-section">
+            <div class="output-label">Live Preview</div>
+            <iframe id="output"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function updateOutput() {
+            const html = document.getElementById('html').value;
+            const css = document.getElementById('css').value;
+            const js = document.getElementById('js').value;
+            
+            const output = document.getElementById('output');
+            let content = '';
+
+            // Check if HTML contains a full HTML document
+            if (html.trim().startsWith('<!DOCTYPE') || html.trim().startsWith('<html')) {
+                content = html; // Use the full HTML document as-is
+            } else {
+                // Use separate sections if not a full document
+                content = `
+                    <html>
+                        <head>
+                            <style>${css}</style>
+                        </head>
+                        <body>
+                            ${html}
+                            <script>${js}<\/script>
+                        </body>
+                    </html>
+                `;
+            }
+            
+            output.contentDocument.open();
+            output.contentDocument.write(content);
+            output.contentDocument.close();
+        }
+
+        function exportCode() {
+            const html = document.getElementById('html').value;
+            const css = document.getElementById('css').value;
+            const js = document.getElementById('js').value;
+            
+            const fullCode = html.trim().startsWith('<!DOCTYPE') || html.trim().startsWith('<html') ? 
+                html : 
+                `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exported Project</title>
+    <style>
+${css}
+    </style>
+</head>
+<body>
+${html}
+    <script>
+${js}
+    <\/script>
+</body>
+</html>`;
+
+            const blob = new Blob([fullCode], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'exported_project.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function openInNewTab() {
+            const html = document.getElementById('html').value;
+            const css = document.getElementById('css').value;
+            const js = document.getElementById('js').value;
+            
+            const fullCode = html.trim().startsWith('<!DOCTYPE') || html.trim().startsWith('<html') ? 
+                html : 
+                `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview</title>
+    <style>${css}</style>
+</head>
+<body>
+${html}
+    <script>${js}<\/script>
+</body>
+</html>`;
+
+            const newWindow = window.open();
+            newWindow.document.write(fullCode);
+            newWindow.document.close();
+        }
+
+        function copyCode(type) {
+            const textarea = document.getElementById(type);
+            textarea.select();
+            document.execCommand('copy');
+            alert(`${type.toUpperCase()} code copied to clipboard!`);
+        }
+
+        function importCode() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.html';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const content = e.target.result;
+                        document.getElementById('html').value = content;
+                        document.getElementById('css').value = '';
+                        document.getElementById('js').value = '';
+                        updateOutput();
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        // Update output whenever user types
+        const editors = document.querySelectorAll('.editor');
+        editors.forEach(editor => {
+            editor.addEventListener('input', updateOutput);
+        });
+
+        // Button event listeners
+        document.getElementById('export-btn').addEventListener('click', exportCode);
+        document.getElementById('new-tab-btn').addEventListener('click', openInNewTab);
+        document.getElementById('import-btn').addEventListener('click', importCode);
+
+        // Initial render (empty)
+        updateOutput();
+    </script>
+</body>
+</html>
